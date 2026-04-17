@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Vállalatirányítás — Bizalmas Ajánlat</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0a0a0f;
+  --paper: #f5f2eb;
+  --gold: #c9a84c;
+  --gold-light: #e8d5a0;
+  --gold-dim: #7a6030;
+  --accent: #1a3a5c;
+  --accent-light: #2e5f8a;
+  --muted: #6b6860;
+  --line: rgba(201,168,76,0.2);
+  --green: #1e6b3f;
+  --green-light: #36a862;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'DM Mono',monospace;
+  font-size:14px;
+  line-height:1.7;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:1000;opacity:0.45;
+}
+
+/* ── TOP BAR ── */
+.gold-bar{position:fixed;top:0;left:0;right:0;z-index:200;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:150;
+  padding:18px 48px;
+  display:flex;justify-content:space-between;align-items:center;
+  background:linear-gradient(180deg,rgba(10,10,15,0.97) 60%,transparent 100%);
+  backdrop-filter:blur(10px);
+}
+.nav-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:12px;letter-spacing:0.3em;color:var(--gold);text-transform:uppercase;}
+
+/* ── LANG SELECTOR ── */
+.lang-selector{position:relative;}
+.lang-btn{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;
+  border:1px solid var(--line);background:rgba(201,168,76,0.05);
+  color:var(--paper);font-family:'DM Mono',monospace;font-size:11px;
+  cursor:pointer;transition:all 0.3s;letter-spacing:0.1em;
+}
+.lang-btn:hover{border-color:var(--gold);color:var(--gold);}
+.lang-btn .flag{font-size:15px;}
+.lang-btn .arrow{font-size:8px;transition:transform 0.3s;color:var(--gold-dim);}
+.lang-selector.open .lang-btn .arrow{transform:rotate(180deg);}
+.lang-dropdown{
+  position:absolute;top:calc(100% + 6px);right:0;min-width:190px;
+  background:#111118;border:1px solid var(--line);
+  display:none;flex-direction:column;z-index:300;
+  box-shadow:0 24px 64px rgba(0,0,0,0.7);
+}
+.lang-selector.open .lang-dropdown{display:flex;}
+.lang-option{
+  display:flex;align-items:center;gap:10px;padding:11px 18px;
+  cursor:pointer;transition:background 0.2s;font-size:11px;
+  color:var(--muted);border-bottom:1px solid rgba(201,168,76,0.05);
+}
+.lang-option:last-child{border-bottom:none;}
+.lang-option:hover{background:rgba(201,168,76,0.07);color:var(--paper);}
+.lang-option.active{color:var(--gold);}
+.lang-option .flag{font-size:16px;}
+.lang-option .lang-native{color:var(--gold-dim);font-size:10px;margin-left:auto;}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  justify-content:center;padding:130px 48px 90px;
+  position:relative;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 70% 55% at 65% 38%,rgba(26,58,92,0.32) 0%,transparent 70%),
+    radial-gradient(ellipse 35% 35% at 18% 75%,rgba(201,168,76,0.07) 0%,transparent 60%);
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(201,168,76,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,0.035) 1px,transparent 1px);
+  background-size:80px 80px;
+  mask-image:radial-gradient(ellipse 65% 65% at 58% 38%,black 0%,transparent 80%);
+}
+.hero-inner{position:relative;max-width:780px;}
+
+.confidential{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 18px;border:1px solid rgba(201,168,76,0.18);
+  font-size:10px;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--gold-dim);margin-bottom:36px;
+  opacity:0;animation:fadeUp 0.8s ease 0.1s forwards;
+}
+.conf-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:blink 2s ease-in-out infinite;}
+
+.hero-eyebrow{
+  font-size:10px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:32px;
+  opacity:0;
+  animation:fadeUp 0.8s ease 0.2s forwards;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  white-space:nowrap;
+  overflow:hidden;
+}
+.hero-eyebrow-line{
+  display:block;
+  width:28px;
+  height:1px;
+  background:var(--gold);
+  opacity:0.5;
+  flex-shrink:0;
+}
+
+/* HERO H1 */
+.hero h1{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:300;
+  font-size:clamp(38px,5vw,72px);
+  line-height:1.1;
+  letter-spacing:-0.01em;
+  max-width:680px;
+  opacity:0;
+  animation:fadeUp 1s ease 0.4s forwards;
+  margin-top:0;
+}
+.hero h1 em{font-style:italic;color:var(--gold);}
+
+.hero-sub{
+  margin-top:32px;max-width:460px;color:var(--muted);
+  font-size:12px;line-height:1.9;
+  opacity:0;animation:fadeUp 1s ease 0.6s forwards;
+}
+.hero-cta{
+  margin-top:48px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+  opacity:0;animation:fadeUp 1s ease 0.8s forwards;
+}
+
+/* ── BUTTONS ── */
+.btn-primary{
+  display:inline-block;padding:14px 36px;
+  background:var(--gold);color:var(--ink);
+  font-family:'Syne',sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:0.2em;text-transform:uppercase;text-decoration:none;
+  transition:all 0.3s ease;cursor:pointer;border:none;
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(201,168,76,0.28);}
+.btn-ghost{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color 0.3s;cursor:pointer;}
+.btn-ghost:hover{color:var(--paper);}
+.btn-green{
+  display:inline-block;padding:14px 36px;background:var(--green);color:white;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:0.2em;text-transform:uppercase;text-decoration:none;
+  transition:all 0.3s;cursor:pointer;border:none;
+}
+.btn-green:hover{background:var(--green-light);transform:translateY(-2px);}
+
+/* ── SECTIONS ── */
+section{padding:110px 48px;position:relative;border-top:1px solid var(--line);}
+
+.section-label{
+  font-size:10px;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--gold-dim);margin-bottom:14px;
+  display:flex;align-items:center;gap:14px;
+}
+.section-label::before{content:'';display:block;width:22px;height:1px;background:var(--gold-dim);}
+
+h2{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:300;
+  font-size:clamp(32px,3.5vw,56px);
+  line-height:1.12;margin-bottom:20px;
+}
+h2 em{font-style:italic;color:var(--gold);}
+
+/* ── PROBLEM GRID ── */
+.problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:56px;}
+.problem-card{
+  padding:40px;background:rgba(255,255,255,0.02);
+  border:1px solid rgba(201,168,76,0.07);
+  position:relative;overflow:hidden;transition:all 0.4s;
+}
+.problem-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0;transition:opacity 0.4s;
+}
+.problem-card:hover{background:rgba(255,255,255,0.04);}
+.problem-card:hover::before{opacity:1;}
+.problem-num{
+  font-family:'Cormorant Garamond',serif;font-size:72px;font-weight:300;
+  color:rgba(201,168,76,0.07);line-height:1;position:absolute;top:20px;right:28px;
+}
+.problem-title{font-family:'Syne',sans-serif;font-weight:600;font-size:15px;color:var(--paper);margin-bottom:12px;}
+.problem-desc{color:var(--muted);font-size:12px;line-height:1.85;}
+
+/* ── AGENTS ── */
+.agent-stack{display:flex;flex-direction:column;margin-top:48px;}
+.agent-item{
+  display:grid;grid-template-columns:44px 1fr auto;
+  align-items:center;gap:22px;padding:24px 28px;
+  border:1px solid var(--line);border-bottom:none;
+  transition:all 0.3s;position:relative;overflow:hidden;
+}
+.agent-item:last-child{border-bottom:1px solid var(--line);}
+.agent-item::after{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:0;
+  background:linear-gradient(90deg,rgba(201,168,76,0.05),transparent);
+  transition:width 0.4s;
+}
+.agent-item:hover::after{width:100%;}
+.agent-icon{
+  width:38px;height:38px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;flex-shrink:0;transition:border-color 0.3s;
+}
+.agent-item:hover .agent-icon{border-color:var(--gold);}
+.agent-name{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;color:var(--paper);}
+.agent-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.7;}
+.agent-phase{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;padding:3px 10px;border:1px solid;white-space:nowrap;}
+.phase-1{color:var(--gold);border-color:rgba(201,168,76,0.3);}
+.phase-2{color:var(--accent-light);border-color:rgba(46,95,138,0.4);}
+.phase-3{color:var(--muted);border-color:rgba(107,104,96,0.3);}
+.phase-4{color:var(--green-light);border-color:rgba(54,168,98,0.35);}
+
+/* ── EXTRA AGENTS (expandable) ── */
+.extra-agents-section{margin-top:64px;}
+.extra-agents-toggle{
+  display:flex;align-items:center;gap:16px;padding:20px 28px;
+  border:1px solid var(--line);cursor:pointer;
+  font-family:'Syne',sans-serif;font-weight:600;font-size:12px;
+  letter-spacing:0.1em;color:var(--paper);
+  background:rgba(201,168,76,0.03);transition:all 0.3s;
+  user-select:none;
+}
+.extra-agents-toggle:hover{background:rgba(201,168,76,0.06);border-color:var(--gold);}
+.toggle-icon{margin-left:auto;font-size:14px;transition:transform 0.3s;color:var(--gold);}
+.extra-agents-toggle.open .toggle-icon{transform:rotate(45deg);}
+.extra-agents-grid{
+  display:none;
+  grid-template-columns:1fr 1fr;
+  gap:2px;
+  border:1px solid var(--line);
+  border-top:none;
+}
+.extra-agents-grid.open{display:grid;}
+.extra-agent-card{
+  padding:32px 36px;background:rgba(255,255,255,0.015);
+  transition:background 0.3s;position:relative;
+}
+.extra-agent-card:hover{background:rgba(255,255,255,0.03);}
+.extra-agent-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+  background:var(--gold);opacity:0.2;transition:opacity 0.3s;
+}
+.extra-agent-card:hover::before{opacity:0.6;}
+.ea-icon{font-size:22px;margin-bottom:12px;}
+.ea-category{font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px;}
+.ea-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--paper);margin-bottom:8px;}
+.ea-desc{font-size:11px;color:var(--muted);line-height:1.75;}
+
+/* ── QUOTE ── */
+.quote-section{padding:0 48px;}
+.quote-block{
+  margin:0;padding:56px 64px;
+  border-left:2px solid var(--gold);background:rgba(201,168,76,0.025);position:relative;
+}
+.quote-block::before{
+  content:'"';position:absolute;top:20px;left:28px;
+  font-family:'Cormorant Garamond',serif;font-size:100px;
+  color:rgba(201,168,76,0.08);line-height:1;
+}
+.quote-text{
+  font-family:'Cormorant Garamond',serif;font-size:26px;
+  font-weight:300;font-style:italic;color:var(--paper);line-height:1.5;max-width:680px;
+}
+.quote-author{margin-top:20px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);}
+
+/* ── PARTNER ── */
+.partner{background:linear-gradient(135deg,#080d14 0%,#090f0a 50%,#080d14 100%);}
+.partner-badge{
+  display:inline-flex;align-items:center;gap:8px;padding:7px 18px;
+  background:rgba(30,107,63,0.15);border:1px solid rgba(54,168,98,0.28);
+  font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--green-light);margin-bottom:28px;
+}
+.partner-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green-light);animation:blink 1.5s ease-in-out infinite;}
+.partner-intro{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start;margin-bottom:64px;}
+.partner-text{color:var(--muted);font-size:12px;line-height:1.95;}
+.partner-text strong{color:var(--paper);font-weight:400;}
+.model-boxes{display:flex;flex-direction:column;gap:2px;}
+.model-box{padding:20px 24px;border:1px solid rgba(30,107,63,0.2);background:rgba(30,107,63,0.04);transition:background 0.3s;}
+.model-box:hover{background:rgba(30,107,63,0.08);}
+.model-box-title{font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:var(--green-light);margin-bottom:6px;}
+.model-box-desc{font-size:11px;color:var(--muted);}
+
+.partner-cards{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:56px;}
+.partner-card{
+  padding:40px;border:1px solid rgba(30,107,63,0.18);
+  background:rgba(30,107,63,0.03);transition:all 0.4s;position:relative;overflow:hidden;
+}
+.partner-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--green-light),transparent);opacity:0;transition:opacity 0.4s;
+}
+.partner-card:hover::before{opacity:1;}
+.partner-card:hover{background:rgba(30,107,63,0.07);}
+.partner-card-icon{font-size:28px;margin-bottom:16px;}
+.partner-card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--paper);margin-bottom:10px;}
+.partner-card-desc{color:var(--muted);font-size:12px;line-height:1.8;}
+
+/* ── REVENUE CALCULATOR ── */
+.revenue-calc{
+  margin-top:64px;padding:56px;
+  border:1px solid rgba(30,107,63,0.3);background:rgba(30,107,63,0.04);
+}
+.revenue-calc-title{
+  font-family:'Cormorant Garamond',serif;font-size:32px;
+  font-weight:300;color:var(--paper);margin-bottom:8px;
+}
+.revenue-calc-title em{font-style:italic;color:var(--green-light);}
+.revenue-grid{display:grid;grid-template-columns:1fr auto;gap:48px;align-items:center;margin-top:32px;}
+.revenue-desc{color:var(--muted);font-size:12px;line-height:1.9;max-width:480px;}
+.revenue-desc strong{color:var(--paper);font-weight:400;}
+.revenue-numbers{text-align:right;}
+.revenue-row{display:flex;align-items:baseline;justify-content:flex-end;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+.revenue-row:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.rev-label{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);}
+.rev-amount{font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:var(--green-light);line-height:1;}
+.rev-amount.big{font-size:52px;color:var(--gold);}
+.rev-period{font-size:10px;color:var(--muted);margin-top:2px;}
+
+/* ── PROCESS ── */
+.process-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:56px;border:1px solid var(--line);}
+.step{padding:40px 30px;border-right:1px solid var(--line);transition:background 0.3s;}
+.step:last-child{border-right:none;}
+.step:hover{background:rgba(201,168,76,0.025);}
+.step-num{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:300;color:var(--gold);opacity:0.4;line-height:1;margin-bottom:20px;}
+.step-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--paper);margin-bottom:10px;letter-spacing:0.04em;}
+.step-desc{font-size:11px;color:var(--muted);line-height:1.8;}
+.step-duration{margin-top:20px;font-size:9px;letter-spacing:0.2em;color:var(--gold-dim);text-transform:uppercase;}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:780px;margin:56px auto 0;border:1px solid var(--line);}
+.stat{padding:40px;border-right:1px solid var(--line);transition:background 0.3s;text-align:center;}
+.stat:last-child{border-right:none;}
+.stat:hover{background:rgba(201,168,76,0.025);}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:52px;font-weight:300;color:var(--gold);line-height:1;}
+.stat-label{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:10px;}
+
+/* ── PRICING ── */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:56px;}
+.price-card{
+  padding:48px 40px;background:rgba(255,255,255,0.02);
+  border:1px solid var(--line);position:relative;transition:all 0.4s;
+}
+.price-card.featured{background:rgba(201,168,76,0.05);border-color:rgba(201,168,76,0.32);}
+.price-card.featured::before{
+  content:'AJÁNLOTT';
+  position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:var(--ink);
+  font-family:'Syne',sans-serif;font-weight:700;font-size:9px;
+  letter-spacing:0.3em;padding:5px 18px;white-space:nowrap;
+}
+.price-card:hover{transform:translateY(-3px);}
+.price-tier{font-size:9px;letter-spacing:0.4em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.price-name{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:28px;color:var(--paper);margin-bottom:6px;}
+.price-billing{display:inline-block;padding:4px 12px;border:1px solid rgba(54,168,98,0.35);background:rgba(54,168,98,0.08);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--green-light);margin-bottom:16px;}
+.price-amount{font-family:'Syne',sans-serif;font-weight:800;font-size:44px;color:var(--gold);line-height:1;margin:16px 0 4px;}
+.price-amount sup{font-size:18px;font-weight:400;vertical-align:super;margin-right:3px;}
+.price-period{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.price-annual{font-size:11px;color:var(--green-light);}
+.price-divider{height:1px;background:var(--line);margin:24px 0;}
+.price-features{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.price-features li{font-size:11px;color:var(--muted);padding-left:18px;position:relative;}
+.price-features li::before{content:'—';position:absolute;left:0;color:var(--gold-dim);}
+.price-features li strong{color:var(--paper);font-weight:400;}
+.price-cta{
+  display:block;text-align:center;padding:14px;margin-top:32px;
+  border:1px solid var(--line);font-family:'Syne',sans-serif;
+  font-weight:600;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--paper);text-decoration:none;transition:all 0.3s;cursor:pointer;
+}
+.price-cta:hover{background:rgba(255,255,255,0.05);border-color:var(--gold);color:var(--gold);}
+.price-card.featured .price-cta{background:var(--gold);border-color:var(--gold);color:var(--ink);}
+.price-card.featured .price-cta:hover{background:var(--gold-light);}
+
+/* ── CTA ── */
+.cta-section{padding:140px 48px;position:relative;overflow:hidden;text-align:center;}
+.cta-bg{position:absolute;inset:0;background:radial-gradient(ellipse 55% 75% at 50% 50%,rgba(201,168,76,0.065) 0%,transparent 70%);}
+.cta-inner{position:relative;max-width:680px;margin:0 auto;}
+.cta-inner h2{font-size:clamp(36px,4.5vw,64px);margin-bottom:20px;}
+.cta-inner p{color:var(--muted);margin-bottom:40px;line-height:1.9;font-size:13px;}
+.cta-buttons{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+
+footer{border-top:1px solid var(--line);padding:36px 48px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:10px;}
+.footer-logo{font-family:'Syne',sans-serif;font-weight:800;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold-dim);}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+.reveal{opacity:0;transform:translateY(28px);transition:all 0.8s cubic-bezier(0.16,1,0.3,1);}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  nav,section,.hero,.quote-section{padding-left:24px;padding-right:24px;}
+  .problem-grid,.pricing-grid,.process-steps,.stats-row,.partner-intro,.partner-cards,.extra-agents-grid,.revenue-grid{grid-template-columns:1fr;}
+  .process-steps .step{border-right:none;border-bottom:1px solid var(--line);}
+  .stats-row .stat{border-right:none;border-bottom:1px solid var(--line);}
+  .revenue-numbers{text-align:left;}
+  footer{flex-direction:column;gap:12px;text-align:center;}
+}
+</style>
+</head>
+<body>
+<div class="gold-bar"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" data-i18n="nav_logo">AI Vállalatirányítás</div>
+  <div class="lang-selector" id="langSelector">
+    <button class="lang-btn" onclick="toggleLang()">
+      <span class="flag" id="currentFlag">🇭🇺</span>
+      <span id="currentLangName">Magyar</span>
+      <span class="arrow">▼</span>
+    </button>
+    <div class="lang-dropdown" id="langDropdown">
+      <div class="lang-option active" onclick="setLang('hu')"><span class="flag">🇭🇺</span><span>Magyar</span><span class="lang-native">Magyar</span></div>
+      <div class="lang-option" onclick="setLang('en')"><span class="flag">🇬🇧</span><span>English</span><span class="lang-native">English</span></div>
+      <div class="lang-option" onclick="setLang('de')"><span class="flag">🇩🇪</span><span>Deutsch</span><span class="lang-native">Deutsch</span></div>
+      <div class="lang-option" onclick="setLang('ro')"><span class="flag">🇷🇴</span><span>Română</span><span class="lang-native">Română</span></div>
+      <div class="lang-option" onclick="setLang('sk')"><span class="flag">🇸🇰</span><span>Slovenčina</span><span class="lang-native">Slovenčina</span></div>
+      <div class="lang-option" onclick="setLang('pl')"><span class="flag">🇵🇱</span><span>Polski</span><span class="lang-native">Polski</span></div>
+      <div class="lang-option" onclick="setLang('fr')"><span class="flag">🇫🇷</span><span>Français</span><span class="lang-native">Français</span></div>
+      <div class="lang-option" onclick="setLang('es')"><span class="flag">🇪🇸</span><span>Español</span><span class="lang-native">Español</span></div>
+      <div class="lang-option" onclick="setLang('it')"><span class="flag">🇮🇹</span><span>Italiano</span><span class="lang-native">Italiano</span></div>
+      <div class="lang-option" onclick="setLang('cs')"><span class="flag">🇨🇿</span><span>Čeština</span><span class="lang-native">Čeština</span></div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" style="border-top:none;padding-top:130px;">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="confidential"><div class="conf-dot"></div><span data-i18n="confidential">Bizalmas · Személyre szabott ajánlat</span></div>
+    <div class="hero-eyebrow"><span class="hero-eyebrow-line"></span><span data-i18n="hero_eyebrow">Az üzleti automatizálás új korszaka</span></div>
+    <h1 data-i18n="hero_h1">Ahol a munka <em>magától</em> elvégzi önmagát.</h1>
+    <p class="hero-sub" data-i18n="hero_sub">Ez az ajánlat egy konkrét útitervet tartalmaz arra, hogyan épül fel az Ön vállalkozása köré egy intelligens AI rendszer — amely nap mint nap dolgozik, miközben Ön más dolgokra koncentrálhat.</p>
+    <div class="hero-cta">
+      <a href="#pricing" class="btn-primary" data-i18n="hero_cta1">Megnézem az ajánlatot</a>
+      <a href="#agents" class="btn-ghost" data-i18n="hero_cta2">Hogyan működik? →</a>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section>
+  <div class="section-label" data-i18n="problem_label">A valóság</div>
+  <h2 data-i18n="problem_h2">Amit ma <em>manuálisan</em> csinálnak — holnap automatizálható.</h2>
+  <div class="problem-grid reveal">
+    <div class="problem-card"><div class="problem-num">01</div><div class="problem-title" data-i18n="p1_title">Elveszett érdeklődők</div><div class="problem-desc" data-i18n="p1_desc">Minden nem megválaszolt ajánlatkérés egy potenciális ügyfél, aki a versenytársnál köt ki. Az első válasz sebessége döntő versenyelőny.</div></div>
+    <div class="problem-card"><div class="problem-num">02</div><div class="problem-title" data-i18n="p2_title">Repetitív adminisztráció</div><div class="problem-desc" data-i18n="p2_desc">Dokumentumok bekérése, kitöltése, ellenőrzése — értékes emberi kapacitást kötnek le, amelyet stratégiai munkára kellene fordítani.</div></div>
+    <div class="problem-card"><div class="problem-num">03</div><div class="problem-title" data-i18n="p3_title">Határidők kiszolgáltatottsága</div><div class="problem-desc" data-i18n="p3_desc">Adóbevallások, éves zárások, megújítások — ha ezek figyelése emberi memóriára támaszkodik, előbb-utóbb csúszik valami.</div></div>
+    <div class="problem-card"><div class="problem-num">04</div><div class="problem-title" data-i18n="p4_title">Skálázhatóság falai</div><div class="problem-desc" data-i18n="p4_desc">Ahogy nő az ügyfélszám, arányosan nő az adminisztratív teher — hacsak a folyamatok nem automatizáltak.</div></div>
+  </div>
+</section>
+
+<!-- AGENTS -->
+<section id="agents">
+  <div class="section-label" data-i18n="agents_label">A megoldás</div>
+  <h2 data-i18n="agents_h2">Intelligens ügynökök — <em>egy összehangolt rendszer.</em></h2>
+
+  <!-- 5 CORE AGENTS -->
+  <div class="agent-stack reveal">
+    <div class="agent-item"><div class="agent-icon">🎯</div><div><div class="agent-name" data-i18n="a1_name">Lead Kvalifikáló Ügynök</div><div class="agent-desc" data-i18n="a1_desc">Automatikusan minősíti az érdeklődőket, szűri a komolyakat, és azonnal személyre szabott választ küld — 24/7, késedelem nélkül.</div></div><div class="agent-phase phase-1">Fázis I</div></div>
+    <div class="agent-item"><div class="agent-icon">📩</div><div><div class="agent-name" data-i18n="a2_name">Follow-up Ügynök</div><div class="agent-desc" data-i18n="a2_desc">Az ajánlat elküldése után intelligens, időzített nyomonkövetési sorozatot indít. Nem enged el potenciális ügyfelet figyelem nélkül.</div></div><div class="agent-phase phase-1">Fázis I</div></div>
+    <div class="agent-item"><div class="agent-icon">📋</div><div><div class="agent-name" data-i18n="a3_name">Dokumentum-összegyűjtő Ügynök</div><div class="agent-desc" data-i18n="a3_desc">Cégalapításhoz és könyveléshez szükséges iratok bekérése, ellenőrzése, hiánypótlás kezelése — teljesen automatizáltan.</div></div><div class="agent-phase phase-2">Fázis II</div></div>
+    <div class="agent-item"><div class="agent-icon">⏰</div><div><div class="agent-name" data-i18n="a4_name">Határidő-figyelő Ügynök</div><div class="agent-desc" data-i18n="a4_desc">Adóbevallások, éves zárlatok, megújítások proaktív kezelése. Minden ügyfélnél, minden határidőre — semmi nem csúszik el.</div></div><div class="agent-phase phase-2">Fázis II</div></div>
+    <div class="agent-item"><div class="agent-icon">💬</div><div><div class="agent-name" data-i18n="a5_name">Ügyfélportál Chatbot</div><div class="agent-desc" data-i18n="a5_desc">Az ügyfelek önkiszolgáló módon lekérdezhetik státuszukat, dokumentumaikat, fizetési helyzetüket — élő ügyfélszolgálat nélkül.</div></div><div class="agent-phase phase-3">Fázis III</div></div>
+  </div>
+
+  <!-- EXTRA AGENTS — kattintásra nyílik -->
+  <div class="extra-agents-section reveal">
+    <div class="extra-agents-toggle" id="extraToggle" onclick="toggleExtra()">
+      <span style="font-size:15px;">⚡</span>
+      <span data-i18n="extra_toggle">+ További ügynökök — kattintson a teljes listához</span>
+      <span class="toggle-icon">+</span>
+    </div>
+    <div class="extra-agents-grid" id="extraGrid">
+      <div class="extra-agent-card"><div class="ea-icon">🔍</div><div class="ea-category">Értékesítés</div><div class="ea-name">Ajánlatkérés-elemző Ügynök</div><div class="ea-desc">Bejövő ajánlatkéréseket automatikusan elemez, kategorizál és prioritást rendel hozzájuk — az értékesítési csapat csak a kész briefet kapja.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">⭐</div><div class="ea-category">Reputáció</div><div class="ea-name">Értékelés-gyűjtő Ügynök</div><div class="ea-desc">Lezárt projektek után automatikusan értékelést kér az ügyfelektől, és kezeli a Google / Trustpilot megjelenést.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">📊</div><div class="ea-category">Vezetői riport</div><div class="ea-name">Havi Riport Ügynök</div><div class="ea-desc">Minden hónap végén automatikus összefoglalót készít: aktív ügyfelek, bevételek, nyitott feladatok, következő teendők.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">🏦</div><div class="ea-category">Pénzügy & Könyvelés</div><div class="ea-name">Számla-feldolgozó Ügynök</div><div class="ea-desc">Bejövő számlákat automatikusan könyveli, kategorizálja és párosítja a megrendelésekkel.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">📜</div><div class="ea-category">Jogi & Compliance</div><div class="ea-name">Szerződés-figyelő Ügynök</div><div class="ea-desc">Aktív szerződések lejáratát figyeli, megújítási javaslatot küld, jogszabályváltozások esetén riaszt.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">🌐</div><div class="ea-category">Nemzetközi</div><div class="ea-name">Fordító & Lokalizáló Ügynök</div><div class="ea-desc">Ajánlatokat, emaileket és dokumentumokat valós időben fordít 10 nyelvre — EU-s partnerek számára.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">🏢</div><div class="ea-category">Cégalapítás</div><div class="ea-name">Cégalapítási Koordinátor Ügynök</div><div class="ea-desc">Végigvezeti az ügyfelet a teljes cégalapítási folyamaton: dokumentumok, határidők, hatósági beadványok.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">📣</div><div class="ea-category">Marketing</div><div class="ea-name">Tartalom-generáló Ügynök</div><div class="ea-desc">LinkedIn posztok, hírlevelek, ügyfél-tájékoztatók automatikus elkészítése — szerkesztésre kész formában.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">🤝</div><div class="ea-category">Ügyfélmegtartás</div><div class="ea-name">Upsell & Keresztértékesítő Ügynök</div><div class="ea-desc">Meglévő ügyfelek adatai alapján azonosítja az extra szolgáltatásokra érett pillanatot és személyre szabott ajánlatot küld.</div></div>
+      <div class="extra-agent-card"><div class="ea-icon">📈</div><div class="ea-category">Üzleti intelligencia</div><div class="ea-name">Piaci Radar Ügynök</div><div class="ea-desc">Figyeli az iparági híreket, versenytárs mozgásokat és törvényváltozásokat — napi digest formájában.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="quote-section" style="border-top:1px solid var(--line);">
+  <div class="quote-block reveal">
+    <div class="quote-text" data-i18n="quote_text">Az AI nem veszi el a munkát — azoknak adja oda, akik használják. A kérdés csak az, melyik oldalon áll az ember.</div>
+    <div class="quote-author" data-i18n="quote_author">— A mesterséges intelligencia korának egyik alapigazsága</div>
+  </div>
+</section>
+
+<!-- PARTNER -->
+<section class="partner" id="partner">
+  <div class="section-label" data-i18n="partner_label">Üzleti lehetőség</div>
+  <h2 data-i18n="partner_h2">Ön nemcsak <em>használja</em> — értékesíti is.</h2>
+
+  <div class="partner-intro reveal">
+    <div>
+      <div class="partner-badge"><div class="partner-badge-dot"></div><span data-i18n="partner_badge">Fehér címkés partner modell</span></div>
+      <p class="partner-text" data-i18n="partner_text">A rendszer, amelyet az Ön vállalkozásához fejlesztünk, <strong>nem csak az Öné lesz.</strong> Könyvelők, adótanácsadók, cégeladási irodák szerte Európában ugyanezekkel a problémákkal küzdenek — Önnek lehetősége van arra, hogy <strong>ezt a rendszert más vállalkozásoknak is értékesítse havonta visszatérő díj ellenében.</strong><br><br>Ez azt jelenti: egyszer befektet, és az AI rendszer az Ön vállalkozásában is dolgozik — miközben <strong>havi passzív bevételforrássá</strong> válik.</p>
+    </div>
+    <div class="model-boxes">
+      <div class="model-box"><div class="model-box-title" data-i18n="model1_title">Saját használat</div><div class="model-box-desc" data-i18n="model1_desc">Az AI rendszer az Ön cégénél dolgozik és megtakarítja az adminisztratív munkaidőt</div></div>
+      <div class="model-box"><div class="model-box-title" data-i18n="model2_title">Partner értékesítés</div><div class="model-box-desc" data-i18n="model2_desc">Ugyanezt a rendszert más hasonló cégeknek kínálja — saját márkával, havi előfizetés alapon</div></div>
+      <div class="model-box"><div class="model-box-title" data-i18n="model3_title">Havi előfizetéses bevétel</div><div class="model-box-desc" data-i18n="model3_desc">Minden partner ügyfél havonta fizet — ez az Ön visszatérő, passzív bevétele</div></div>
+    </div>
+  </div>
+
+  <div class="partner-cards reveal">
+    <div class="partner-card"><div class="partner-card-icon">🏷️</div><div class="partner-card-title" data-i18n="pc1_title">White-label rendszer</div><div class="partner-card-desc" data-i18n="pc1_desc">A teljes platform az Ön márkájával, az Ön nevével jelenik meg a partnerügyfelek felé. Senki nem tudja, mi van mögötte — csak Ön.</div></div>
+    <div class="partner-card"><div class="partner-card-icon">🌍</div><div class="partner-card-title" data-i18n="pc2_title">10 nyelven működik</div><div class="partner-card-desc" data-i18n="pc2_desc">A rendszer EU-szerte értékesíthető: román, szlovák, cseh, lengyel, német, olasz, spanyol, francia piacokon.</div></div>
+    <div class="partner-card"><div class="partner-card-icon">📈</div><div class="partner-card-title" data-i18n="pc3_title">Skálázható modell</div><div class="partner-card-desc" data-i18n="pc3_desc">Minden egyes partner ügyfél, akit beonboard, automatikusan növeli a havi visszatérő bevételét. Lineárisan és megállíthatatlanul.</div></div>
+    <div class="partner-card"><div class="partner-card-icon">🤝</div><div class="partner-card-title" data-i18n="pc4_title">Teljes technikai háttér</div><div class="partner-card-desc" data-i18n="pc4_desc">A fejlesztés, karbantartás, frissítések mind a fejlesztő feladata. Ön értékesít — a technika fut a háttérben.</div></div>
+  </div>
+
+  <!-- REVENUE CALCULATOR -->
+  <div class="revenue-calc reveal">
+    <div class="revenue-calc-title">Ha <em>10 céget</em> onboardol partner ügyfelének...</div>
+    <div class="revenue-grid">
+      <div>
+        <p class="revenue-desc">Minden partner cég <strong>havi €300–3.000 előfizetési díjat</strong> fizet az AI rendszer használatáért — a csomag méretétől függően. Ez az Ön saját vállalkozásán felüli, <strong>automatikus, visszatérő bevétel</strong> — és minden egyes új ügyféllel nő.<br><br>A legmagasabb csomagnál (<strong>€3.000/hó/cég</strong>) már 10 partner ügyfél elegendő ahhoz, hogy évi <strong>€360.000 passzív bevételt</strong> generáljon.</p>
+      </div>
+      <div class="revenue-numbers">
+        <div class="revenue-row">
+          <span class="rev-label">1 partner cég</span>
+          <div><div class="rev-amount">€3.000</div><div class="rev-period">/hó</div></div>
+        </div>
+        <div class="revenue-row">
+          <span class="rev-label">10 partner cég</span>
+          <div><div class="rev-amount">€30.000</div><div class="rev-period">/hó</div></div>
+        </div>
+        <div class="revenue-row">
+          <span class="rev-label">Évente</span>
+          <div><div class="rev-amount big">€360.000</div><div class="rev-period">passzív bevétel</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section>
+  <div class="section-label" data-i18n="process_label">A folyamat</div>
+  <h2 data-i18n="process_h2">Négy lépés a <em>működő rendszerig.</em></h2>
+  <div class="process-steps reveal">
+    <div class="step"><div class="step-num">01</div><div class="step-title" data-i18n="s1_title">Discovery Workshop</div><div class="step-desc" data-i18n="s1_desc">Feltérképezzük a meglévő folyamatokat, azonosítjuk az automatizálható pontokat, és meghatározzuk az első sprint céljait.</div><div class="step-duration" data-i18n="s1_dur">1–2 alkalom · ~2 óra</div></div>
+    <div class="step"><div class="step-num">02</div><div class="step-title" data-i18n="s2_title">MVP Fejlesztés</div><div class="step-desc" data-i18n="s2_desc">Az első két ügynök gyors ütemben kerül megépítésre és tesztelésre valós adatokkal.</div><div class="step-duration" data-i18n="s2_dur">2–3 hét</div></div>
+    <div class="step"><div class="step-num">03</div><div class="step-title" data-i18n="s3_title">Integráció & Élesítés</div><div class="step-desc" data-i18n="s3_desc">A rendszer bekapcsolódik a meglévő eszközökbe. Onboarding, átadás, dokumentáció.</div><div class="step-duration" data-i18n="s3_dur">1 hét</div></div>
+    <div class="step"><div class="step-num">04</div><div class="step-title" data-i18n="s4_title">Partner Skálázás</div><div class="step-desc" data-i18n="s4_desc">A rendszer bővül és felkészítjük az első partner ügyfelek onboardolására — EU-szerte.</div><div class="step-duration" data-i18n="s4_dur">Folyamatos</div></div>
+  </div>
+</section>
+
+<!-- WHY NOW -->
+<section style="text-align:center;background:linear-gradient(135deg,#0a0a0f 0%,#0d1520 50%,#0a0a0f 100%);">
+  <div class="section-label" style="justify-content:center;" data-i18n="whynow_label">Miért most?</div>
+  <h2 style="text-align:center;" data-i18n="whynow_h2">Az early adopter <em>előny</em> ma még él.</h2>
+  <p style="max-width:520px;margin:0 auto;color:var(--muted);line-height:1.9;font-size:13px;" data-i18n="whynow_p">Az AI automatizálás a KKV szektorban még korai fázisban van Magyarországon és Európában. Aki most lép, 2–3 éves előnnyel indulhat a versenytársakhoz képest — és aki most épít partnerhálózatot, az dominálja a piacát.</p>
+  <div class="stats-row reveal">
+    <div class="stat"><div class="stat-value">3×</div><div class="stat-label" data-i18n="stat1">gyorsabb ügyfélkezelés automatizálással</div></div>
+    <div class="stat"><div class="stat-value">68%</div><div class="stat-label" data-i18n="stat2">az adminisztratív feladatok automatizálható aránya</div></div>
+    <div class="stat"><div class="stat-value">∞</div><div class="stat-label" data-i18n="stat3">skálázhatóság — az ügynök nem fárad el</div></div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-label" data-i18n="pricing_label">Befektetés</div>
+  <h2 data-i18n="pricing_h2">Havi előfizetés — <em>mérhető eredmény.</em></h2>
+  <div class="pricing-grid reveal">
+    <div class="price-card">
+      <div class="price-tier" data-i18n="t1_tier">Belépő csomag</div>
+      <div class="price-name" data-i18n="t1_name">Starter</div>
+      <div class="price-billing" data-i18n="billing">Havi előfizetés</div>
+      <div class="price-amount"><sup>€</sup>300</div>
+      <div class="price-period" data-i18n="t1_period">/ hó · 2 aktív ügynök</div>
+      <div class="price-annual" data-i18n="t1_annual">= €3.600 / év</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li><strong data-i18n="t1_f1">Lead Kvalifikáló Ügynök</strong></li>
+        <li><strong data-i18n="t1_f2">Follow-up Ügynök</strong></li>
+        <li data-i18n="t1_f3">Email integráció</li>
+        <li data-i18n="t1_f4">Havi riport</li>
+        <li data-i18n="t1_f5">Alap onboarding</li>
+      </ul>
+      <a href="#contact" class="price-cta" data-i18n="t1_cta">Kezdjük itt</a>
+    </div>
+    <div class="price-card featured">
+      <div class="price-tier" data-i18n="t2_tier">Legtöbbet választott</div>
+      <div class="price-name" data-i18n="t2_name">Business</div>
+      <div class="price-billing" data-i18n="billing">Havi előfizetés</div>
+      <div class="price-amount"><sup>€</sup>1.000</div>
+      <div class="price-period" data-i18n="t2_period">/ hó · 5 aktív ügynök</div>
+      <div class="price-annual" data-i18n="t2_annual">= €12.000 / év</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li><strong data-i18n="t2_f1">5 AI ügynök</strong> <span data-i18n="t2_f1b">teljes stack</span></li>
+        <li><strong data-i18n="t2_f2">CRM integráció</strong></li>
+        <li><strong data-i18n="t2_f3">Dokumentumkezelés</strong></li>
+        <li><strong data-i18n="t2_f4">White-label</strong> <span data-i18n="t2_f4b">partner értékesítéshez</span></li>
+        <li><strong data-i18n="t2_f5">Prioritás support</strong></li>
+      </ul>
+      <a href="#contact" class="price-cta" data-i18n="t2_cta">Ezt kérem</a>
+    </div>
+    <div class="price-card">
+      <div class="price-tier" data-i18n="t3_tier">Teljes rendszer</div>
+      <div class="price-name" data-i18n="t3_name">Enterprise</div>
+      <div class="price-billing" data-i18n="billing">Havi előfizetés</div>
+      <div class="price-amount"><sup>€</sup>3.000</div>
+      <div class="price-period" data-i18n="t3_period">/ hó · korlátlan ügynök</div>
+      <div class="price-annual" data-i18n="t3_annual">= €36.000 / év · cégenkénti</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li><strong data-i18n="t3_f1">Korlátlan AI ügynök</strong></li>
+        <li><strong data-i18n="t3_f2">Ügyfélportál chatbot</strong></li>
+        <li><strong data-i18n="t3_f3">Piaci Radar Ügynök</strong></li>
+        <li><strong data-i18n="t3_f4">Dedikált fejlesztői support</strong></li>
+        <li><strong data-i18n="t3_f5">10 partner cég = €360K/év</strong></li>
+      </ul>
+      <a href="#contact" class="price-cta" data-i18n="t3_cta">Kapcsolatfelvétel</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <div class="cta-bg"></div>
+  <div class="cta-inner reveal">
+    <div class="section-label" style="justify-content:center;" data-i18n="cta_label">Következő lépés</div>
+    <h2 data-i18n="cta_h2">Egy döntés <em>választja el</em> Öntől.</h2>
+    <p data-i18n="cta_p">Ez az ajánlat az Ön vállalkozásának konkrét folyamataira és üzleti modelljére épül. A legokosabb első lépés: egy 2 órás Discovery Workshop — amely után pontosan látja, mi lehetséges saját használatra és partner értékesítésre.</p>
+    <div class="cta-buttons">
+      <a href="mailto:hello@example.com?subject=AI+Discovery+Workshop" class="btn-primary" data-i18n="cta_btn1">Discovery Workshop lefoglalása</a>
+      <a href="tel:+36000000000" class="btn-ghost" data-i18n="cta_btn2">Vagy hívjon most →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo" data-i18n="nav_logo">AI Vállalatirányítás</div>
+  <div data-i18n="footer_mid">Bizalmas ajánlat · Személyre szabva · 2025</div>
+  <div data-i18n="footer_right">Érvényes: 30 napig</div>
+</footer>
+
+<script>
+// ── TRANSLATIONS (hu + en only shown inline; others same as v2) ──
+const T = {
+  hu:{
+    nav_logo:"AI Vállalatirányítás",confidential:"Bizalmas · Személyre szabott ajánlat",
+    hero_eyebrow:"Az üzleti automatizálás új korszaka",
+    hero_h1:"Ahol a munka <em>magától</em> elvégzi önmagát.",
+    hero_sub:"Ez az ajánlat egy konkrét útitervet tartalmaz arra, hogyan épül fel az Ön vállalkozása köré egy intelligens AI rendszer — amely nap mint nap dolgozik, miközben Ön más dolgokra koncentrálhat.",
+    hero_cta1:"Megnézem az ajánlatot",hero_cta2:"Hogyan működik? →",
+    problem_label:"A valóság",
+    problem_h2:"Amit ma <em>manuálisan</em> csinálnak — holnap automatizálható.",
+    p1_title:"Elveszett érdeklődők",p1_desc:"Minden nem megválaszolt ajánlatkérés egy potenciális ügyfél, aki a versenytársnál köt ki.",
+    p2_title:"Repetitív adminisztráció",p2_desc:"Dokumentumok bekérése, kitöltése, ellenőrzése — értékes emberi kapacitást kötnek le.",
+    p3_title:"Határidők kiszolgáltatottsága",p3_desc:"Adóbevallások, éves zárások — ha ezek figyelése emberi memóriára támaszkodik, csúszás garantált.",
+    p4_title:"Skálázhatóság falai",p4_desc:"Ahogy nő az ügyfélszám, arányosan nő az adminisztratív teher — hacsak a folyamatok nem automatizáltak.",
+    agents_label:"A megoldás",agents_h2:"Intelligens ügynökök — <em>egy összehangolt rendszer.</em>",
+    a1_name:"Lead Kvalifikáló Ügynök",a1_desc:"Automatikusan minősíti az érdeklődőket és azonnal személyre szabott választ küld — 24/7.",
+    a2_name:"Follow-up Ügynök",a2_desc:"Az ajánlat elküldése után intelligens, időzített nyomonkövetési sorozatot indít.",
+    a3_name:"Dokumentum-összegyűjtő Ügynök",a3_desc:"Cégalapításhoz és könyveléshez szükséges iratok bekérése és ellenőrzése automatizáltan.",
+    a4_name:"Határidő-figyelő Ügynök",a4_desc:"Adóbevallások, éves zárlatok proaktív kezelése. Minden ügyfélnél, minden határidőre.",
+    a5_name:"Ügyfélportál Chatbot",a5_desc:"Az ügyfelek önkiszolgáló módon lekérdezhetik státuszukat és dokumentumaikat.",
+    a6_name:"Ajánlatkérés-elemző Ügynök",a6_desc:"Bejövő ajánlatkéréseket automatikusan elemez, kategorizál és prioritást rendel hozzájuk.",
+    a7_name:"Értékelés-gyűjtő Ügynök",a7_desc:"Lezárt projektek után automatikusan értékelést kér az ügyfelektől. Google / Trustpilot kezelés.",
+    a8_name:"Havi Riport Ügynök",a8_desc:"Minden hónap végén automatikus összefoglalót készít: bevételek, nyitott feladatok, következő teendők.",
+    extra_toggle:"+ További iparági ügynökök — kattintson a megtekintéshez",
+    quote_text:"Az AI nem veszi el a munkát — azoknak adja oda, akik használják. A kérdés csak az, melyik oldalon áll az ember.",
+    quote_author:"— A mesterséges intelligencia korának egyik alapigazsága",
+    partner_label:"Üzleti lehetőség",partner_h2:"Ön nemcsak <em>használja</em> — értékesíti is.",
+    partner_badge:"Fehér címkés partner modell",
+    partner_text:"A rendszer, amelyet az Ön vállalkozásához fejlesztünk, <strong>nem csak az Öné lesz.</strong> Könyvelők, adótanácsadók szerte Európában ugyanezekkel a problémákkal küzdenek — Önnek lehetősége van arra, hogy <strong>ezt a rendszert más vállalkozásoknak is értékesítse havonta visszatérő díj ellenében.</strong><br><br>Egyszer befektet, és az AI az Ön vállalkozásában is dolgozik — miközben <strong>havi passzív bevételforrássá</strong> válik.",
+    model1_title:"Saját használat",model1_desc:"Az AI rendszer az Ön cégénél dolgozik és megtakarítja az adminisztratív munkaidőt",
+    model2_title:"Partner értékesítés",model2_desc:"Ugyanezt a rendszert más hasonló cégeknek kínálja — saját márkával, havi előfizetés alapon",
+    model3_title:"Havi előfizetéses bevétel",model3_desc:"Minden partner ügyfél havonta fizet — ez az Ön visszatérő, passzív bevétele",
+    pc1_title:"White-label rendszer",pc1_desc:"A teljes platform az Ön márkájával jelenik meg. Senki nem tudja, mi van mögötte — csak Ön.",
+    pc2_title:"10 nyelven működik",pc2_desc:"A rendszer EU-szerte értékesíthető: román, szlovák, cseh, lengyel, német piacokon.",
+    pc3_title:"Skálázható modell",pc3_desc:"Minden egyes partner ügyfél automatikusan növeli a havi visszatérő bevételét.",
+    pc4_title:"Teljes technikai háttér",pc4_desc:"A fejlesztés, karbantartás, frissítések mind a fejlesztő feladata. Ön értékesít — a technika fut.",
+    process_label:"A folyamat",process_h2:"Négy lépés a <em>működő rendszerig.</em>",
+    s1_title:"Discovery Workshop",s1_desc:"Feltérképezzük a meglévő folyamatokat és meghatározzuk az első sprint céljait.",s1_dur:"1–2 alkalom · ~2 óra",
+    s2_title:"MVP Fejlesztés",s2_desc:"Az első ügynökök gyors ütemben kerülnek megépítésre valós adatokkal.",s2_dur:"2–3 hét",
+    s3_title:"Integráció & Élesítés",s3_desc:"A rendszer bekapcsolódik a meglévő eszközökbe. Onboarding és átadás.",s3_dur:"1 hét",
+    s4_title:"Partner Skálázás",s4_desc:"Felkészítjük az első partner ügyfelek onboardolására EU-szerte.",s4_dur:"Folyamatos",
+    whynow_label:"Miért most?",whynow_h2:"Az early adopter <em>előny</em> ma még él.",
+    whynow_p:"Az AI automatizálás a KKV szektorban még korai fázisban van. Aki most lép, 2–3 éves előnnyel indulhat — és aki most épít partnerhálózatot, az dominálja a piacát.",
+    stat1:"gyorsabb ügyfélkezelés automatizálással",stat2:"az adminisztratív feladatok automatizálható aránya",stat3:"skálázhatóság — az ügynök nem fárad el",
+    pricing_label:"Befektetés",pricing_h2:"Havi előfizetés — <em>mérhető eredmény.</em>",
+    billing:"Havi előfizetés",
+    t1_tier:"Belépő csomag",t1_name:"Starter",t1_period:"/ hó · 2 aktív ügynök",t1_annual:"= €3.600 / év",
+    t1_f1:"Lead Kvalifikáló Ügynök",t1_f2:"Follow-up Ügynök",t1_f3:"Email integráció",t1_f4:"Havi riport",t1_f5:"Alap onboarding",t1_cta:"Kezdjük itt",
+    t2_tier:"Legtöbbet választott",t2_name:"Business",t2_period:"/ hó · 5 aktív ügynök",t2_annual:"= €12.000 / év",
+    t2_f1:"5 AI ügynök",t2_f1b:"teljes stack",t2_f2:"CRM integráció",t2_f3:"Dokumentumkezelés",t2_f4:"White-label",t2_f4b:"partner értékesítéshez",t2_f5:"Prioritás support",t2_cta:"Ezt kérem",
+    t3_tier:"Teljes rendszer",t3_name:"Enterprise",t3_period:"/ hó · korlátlan ügynök",t3_annual:"= €36.000 / év · cégenkénti",
+    t3_f1:"Korlátlan AI ügynök",t3_f2:"Ügyfélportál chatbot",t3_f3:"Piaci Radar Ügynök",t3_f4:"Dedikált fejlesztői support",t3_f5:"10 partner cég = €360K/év",t3_cta:"Kapcsolatfelvétel",
+    cta_label:"Következő lépés",cta_h2:"Egy döntés <em>választja el</em> Öntől.",
+    cta_p:"Ez az ajánlat az Ön konkrét folyamataira épül. A legokosabb első lépés: 2 óra Discovery Workshop.",
+    cta_btn1:"Discovery Workshop lefoglalása",cta_btn2:"Vagy hívjon most →",
+    footer_mid:"Bizalmas ajánlat · Személyre szabva · 2025",footer_right:"Érvényes: 30 napig"
+  },
+  en:{
+    nav_logo:"AI Business Management",confidential:"Confidential · Personalised Proposal",
+    hero_eyebrow:"The new era of business automation",
+    hero_h1:"Where work <em>does itself</em> automatically.",
+    hero_sub:"This proposal contains a concrete roadmap for how an intelligent AI system will be built around your business — working every day while you focus on what matters.",
+    hero_cta1:"View the proposal",hero_cta2:"How does it work? →",
+    problem_label:"The reality",problem_h2:"What you do <em>manually</em> today — can be automated tomorrow.",
+    p1_title:"Lost leads",p1_desc:"Every unanswered enquiry is a potential client who ends up with your competitor.",
+    p2_title:"Repetitive administration",p2_desc:"Requesting, completing, checking documents — these tasks consume valuable human capacity.",
+    p3_title:"Deadline vulnerability",p3_desc:"Tax filings, annual closings — if tracking these relies on human memory, something will eventually slip.",
+    p4_title:"Scaling walls",p4_desc:"As client numbers grow, administrative burden grows proportionally — unless processes are automated.",
+    agents_label:"The solution",agents_h2:"Intelligent agents — <em>one coordinated system.</em>",
+    a1_name:"Lead Qualification Agent",a1_desc:"Automatically qualifies enquiries and sends personalised responses instantly — 24/7.",
+    a2_name:"Follow-up Agent",a2_desc:"After sending a proposal, launches an intelligent timed follow-up sequence.",
+    a3_name:"Document Collection Agent",a3_desc:"Requests and verifies documents for company formation and accounting — fully automated.",
+    a4_name:"Deadline Monitoring Agent",a4_desc:"Proactive management of tax filings and annual closings. Every client, every deadline.",
+    a5_name:"Client Portal Chatbot",a5_desc:"Clients self-serve to check status and documents without burdening support.",
+    a6_name:"Enquiry Analysis Agent",a6_desc:"Automatically analyses, categorises and prioritises incoming enquiries — the team gets a ready brief.",
+    a7_name:"Review Collection Agent",a7_desc:"After closed projects, automatically requests client reviews. Manages Google / Trustpilot presence.",
+    a8_name:"Monthly Report Agent",a8_desc:"At month end, automatically generates a summary: revenue, open tasks, next steps — management-ready.",
+    extra_toggle:"+ Additional industry agents — click to view",
+    quote_text:"AI doesn't take work away — it gives it to those who use it. The question is simply which side you're on.",
+    quote_author:"— A fundamental truth of the AI age",
+    partner_label:"Business opportunity",partner_h2:"You don't just <em>use it</em> — you sell it too.",
+    partner_badge:"White-label partner model",
+    partner_text:"The system we build for your business <strong>won't just be yours.</strong> Accountants, tax advisors across Europe face the same problems — you have the opportunity to <strong>sell this system to other businesses on a monthly recurring basis.</strong><br><br>Invest once, and the AI works in your business — while also becoming a <strong>monthly passive revenue stream.</strong>",
+    model1_title:"Own use",model1_desc:"The AI system works in your company and saves administrative time",
+    model2_title:"Partner sales",model2_desc:"Offer the same system to similar companies — under your own brand, monthly subscription",
+    model3_title:"Monthly recurring revenue",model3_desc:"Every partner client pays monthly — your recurring passive income",
+    pc1_title:"White-label system",pc1_desc:"The entire platform appears under your brand. Nobody knows what's behind it — only you.",
+    pc2_title:"Works in 10 languages",pc2_desc:"The system can be sold across the EU: Romanian, Slovak, Czech, Polish, German markets.",
+    pc3_title:"Scalable model",pc3_desc:"Every partner client you onboard automatically increases your monthly recurring revenue.",
+    pc4_title:"Full technical backbone",pc4_desc:"Development and maintenance is the developer's responsibility. You sell — the tech runs.",
+    process_label:"The process",process_h2:"Four steps to a <em>working system.</em>",
+    s1_title:"Discovery Workshop",s1_desc:"We map existing processes and define automation points and first sprint goals.",s1_dur:"1–2 sessions · ~2 hours",
+    s2_title:"MVP Development",s2_desc:"The first agents are built and tested rapidly with real data.",s2_dur:"2–3 weeks",
+    s3_title:"Integration & Launch",s3_desc:"The system connects to existing tools. Onboarding and handover.",s3_dur:"1 week",
+    s4_title:"Partner Scaling",s4_desc:"We prepare the system for onboarding first partner clients across the EU.",s4_dur:"Ongoing",
+    whynow_label:"Why now?",whynow_h2:"The early adopter <em>advantage</em> still exists.",
+    whynow_p:"AI automation in the SME sector is still in early stages. Those who move now can have a 2–3 year head start — and those who build partner networks now will dominate their market.",
+    stat1:"faster client management with automation",stat2:"of administrative tasks are automatable",stat3:"scalability — the agent never tires",
+    pricing_label:"Investment",pricing_h2:"Monthly subscription — <em>measurable results.</em>",
+    billing:"Monthly subscription",
+    t1_tier:"Entry package",t1_name:"Starter",t1_period:"/ mo · 2 active agents",t1_annual:"= €3,600 / year",
+    t1_f1:"Lead Qualification Agent",t1_f2:"Follow-up Agent",t1_f3:"Email integration",t1_f4:"Monthly report",t1_f5:"Basic onboarding",t1_cta:"Start here",
+    t2_tier:"Most popular",t2_name:"Business",t2_period:"/ mo · 5 active agents",t2_annual:"= €12,000 / year",
+    t2_f1:"5 AI agents",t2_f1b:"full stack",t2_f2:"CRM integration",t2_f3:"Document management",t2_f4:"White-label",t2_f4b:"for partner sales",t2_f5:"Priority support",t2_cta:"I want this",
+    t3_tier:"Full system",t3_name:"Enterprise",t3_period:"/ mo · unlimited agents",t3_annual:"= €36,000 / yr · per company",
+    t3_f1:"Unlimited AI agents",t3_f2:"Client portal chatbot",t3_f3:"Market Radar Agent",t3_f4:"Dedicated developer support",t3_f5:"10 partners = €360K/yr",t3_cta:"Get in touch",
+    cta_label:"Next step",cta_h2:"One decision <em>stands between</em> you and this.",
+    cta_p:"This proposal is built on your specific processes and business model. The smartest first step: a 2-hour Discovery Workshop.",
+    cta_btn1:"Book Discovery Workshop",cta_btn2:"Or call now →",
+    footer_mid:"Confidential proposal · Personalised · 2025",footer_right:"Valid: 30 days"
+  }
+};
+
+// Fill remaining languages with EN fallback for brevity — extend as needed
+['de','ro','sk','pl','fr','es','it','cs'].forEach(l => { T[l] = T[l] || Object.assign({},T.en); });
+
+const LANG_META={hu:{flag:'🇭🇺',name:'Magyar'},en:{flag:'🇬🇧',name:'English'},de:{flag:'🇩🇪',name:'Deutsch'},ro:{flag:'🇷🇴',name:'Română'},sk:{flag:'🇸🇰',name:'Slovenčina'},pl:{flag:'🇵🇱',name:'Polski'},fr:{flag:'🇫🇷',name:'Français'},es:{flag:'🇪🇸',name:'Español'},it:{flag:'🇮🇹',name:'Italiano'},cs:{flag:'🇨🇿',name:'Čeština'}};
+let currentLang='hu';
+
+function toggleLang(){document.getElementById('langSelector').classList.toggle('open');}
+
+function setLang(lang){
+  currentLang=lang;
+  const t=T[lang]||T.en;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    if(t[key]!==undefined) el.innerHTML=t[key];
+  });
+  document.getElementById('currentFlag').textContent=LANG_META[lang].flag;
+  document.getElementById('currentLangName').textContent=LANG_META[lang].name;
+  document.documentElement.lang=lang;
+  document.querySelectorAll('.lang-option').forEach(opt=>{
+    opt.classList.toggle('active',opt.getAttribute('onclick')===`setLang('${lang}')`);
+  });
+  document.getElementById('langSelector').classList.remove('open');
+}
+
+document.addEventListener('click',e=>{if(!e.target.closest('.lang-selector')) document.getElementById('langSelector').classList.remove('open');});
+
+function toggleExtra(){
+  const toggle=document.getElementById('extraToggle');
+  const grid=document.getElementById('extraGrid');
+  toggle.classList.toggle('open');
+  grid.classList.toggle('open');
+}
+
+// Scroll reveal
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{if(entry.isIntersecting) entry.target.classList.add('visible');});
+},{threshold:0.08,rootMargin:'0px 0px -48px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const target=document.querySelector(a.getAttribute('href'));
+    if(target){e.preventDefault();target.scrollIntoView({behavior:'smooth',block:'start'});}
+  });
+});
+</script>
+</body>
+</html>
